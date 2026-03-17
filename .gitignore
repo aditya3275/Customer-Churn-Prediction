@@ -7,3 +7,4 @@ data/processed.csv
 data/engineered.csv
 .DS_Store
 outline.txt
+.vercel
