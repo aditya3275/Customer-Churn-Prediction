@@ -6,3 +6,4 @@ data/telco_churn.csv
 data/processed.csv
 data/engineered.csv
 .DS_Store
+outline.txt
