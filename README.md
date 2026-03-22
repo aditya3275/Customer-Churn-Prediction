@@ -196,6 +196,12 @@ curl -X POST "http://127.0.0.1:8000/predict" \
 
 ---
 
+## 🏆 Achievement
+
+This project was built as part of **ForgeML 1.0 – Machine Learning Bootcamp & Competitive Hackathon** organized by the **Cloud AI and Data Engineering Society (CADES) Club**, Department of Networking and Communications, School of Computing, **SRM Institute of Science & Technology** (March 16-17, 2026).
+
+![ForgeML 1.0 Certificate](certificates/ForgeML1.0_Certificate.png)
+
 ## 👥 Team
 
 **Team ForgeML** — Hackathon 2026

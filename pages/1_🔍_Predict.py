@@ -1,7 +1,10 @@
 import streamlit as st
 import requests
+import os
 
 st.set_page_config(page_title="Predict Churn", page_icon="🔍", layout="wide")
+
+API_BASE = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
 st.title("🔍 Customer Churn Predictor")
 st.markdown(
@@ -14,6 +17,7 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     st.subheader("👤 Demographics")
+    customer_id = st.text_input("Customer ID (leave blank to auto-generate)", value="")
     gender = st.selectbox("Gender", ["Male", "Female"])
     senior = st.selectbox("Senior Citizen", [0, 1])
     partner = st.selectbox("Partner", ["Yes", "No"])
@@ -59,35 +63,44 @@ st.divider()
 # ── Predict ────────────────────────────────────────────────
 if st.button("🔍 Predict Churn", use_container_width=True):
     payload = {
-        "gender": gender,
-        "SeniorCitizen": senior,
-        "Partner": partner,
-        "Dependents": dependents,
-        "tenure": tenure,
-        "PhoneService": phone_service,
-        "MultipleLines": multiple_lines,
+        "customer_id":    customer_id.strip() if customer_id.strip() else None,
+        "gender":          gender,
+        "SeniorCitizen":   senior,
+        "Partner":         partner,
+        "Dependents":      dependents,
+        "tenure":          tenure,
+        "PhoneService":    phone_service,
+        "MultipleLines":   multiple_lines,
         "InternetService": internet_service,
-        "OnlineSecurity": online_security,
-        "OnlineBackup": online_backup,
+        "OnlineSecurity":  online_security,
+        "OnlineBackup":    online_backup,
         "DeviceProtection": device_protection,
-        "TechSupport": tech_support,
-        "StreamingTV": streaming_tv,
+        "TechSupport":     tech_support,
+        "StreamingTV":     streaming_tv,
         "StreamingMovies": streaming_movies,
-        "Contract": contract,
+        "Contract":        contract,
         "PaperlessBilling": paperless,
-        "PaymentMethod": payment,
-        "MonthlyCharges": monthly_charges,
-        "TotalCharges": total_charges,
+        "PaymentMethod":   payment,
+        "MonthlyCharges":  monthly_charges,
+        "TotalCharges":    total_charges,
     }
 
     try:
-        response = requests.post("http://127.0.0.1:8000/predict", json=payload)
+        response = requests.post(f"{API_BASE}/predict", json=payload, timeout=10)
+        response.raise_for_status()
         result = response.json()
 
         st.divider()
         st.subheader("🎯 Prediction Results")
 
-        col_a, col_b, col_c, col_d = st.columns(4)
+        # ── DB confirmation badge ──────────────────────────────
+        st.success(
+            f"✅ **Prediction saved to database** — "
+            f"ID `{result['prediction_id']}` · "
+            f"Customer `{result['customer_id']}`"
+        )
+
+        col_a, col_b, col_c, col_d, col_e, col_f = st.columns(6)
 
         with col_a:
             churn = result["churn_prediction"]
@@ -98,20 +111,27 @@ if st.button("🔍 Predict Churn", use_container_width=True):
             st.metric("Churn Probability", result["churn_probability"])
 
         with col_c:
-            st.metric("Confidence", result["confidence"])
+            confidence_pct = f"{round(result['confidence_score'] * 100, 1)}%"
+            st.metric("Confidence", confidence_pct)
 
         with col_d:
             risk = result["risk_category"]
             risk_color = {"High Risk": "🔴", "Medium Risk": "🟡", "Low Risk": "🟢"}
             st.metric("Risk Category", f"{risk_color[risk]} {risk}")
 
-        # ── Probability Meter ──────────────────────────────
+        with col_e:
+            st.metric("Expected CLV", f"${result['lifetime_value']:,.2f}")
+
+        with col_f:
+            st.metric("Prediction ID", f"#{result['prediction_id']}")
+
+        # ── Probability Meter ──────────────────────────────────
         st.divider()
         st.subheader("📈 Churn Probability Meter")
         prob = result["churn_probability"]
         st.progress(prob)
 
-        # ── Alert ──────────────────────────────────────────
+        # ── Alert ──────────────────────────────────────────────
         if risk == "High Risk":
             st.error("⚠️ HIGH RISK — Immediate retention action recommended!")
         elif risk == "Medium Risk":
@@ -119,7 +139,7 @@ if st.button("🔍 Predict Churn", use_container_width=True):
         else:
             st.success("✅ LOW RISK — Customer is likely to stay.")
 
-        # ── Retention Tips ─────────────────────────────────
+        # ── Retention Tips ─────────────────────────────────────
         st.divider()
         st.subheader("💡 Recommended Retention Actions")
 
@@ -138,8 +158,20 @@ if st.button("🔍 Predict Churn", use_container_width=True):
         if prob < 0.4:
             st.success("🌟 Customer is satisfied — consider upselling premium services")
 
+        # ── History shortcut ───────────────────────────────────
+        st.divider()
+        cid = result["customer_id"]
+        if st.button(f"📂 View full history for customer {cid}"):
+            with st.spinner("Fetching history…"):
+                hist = requests.get(
+                    f"{API_BASE}/customer-history/{cid}", timeout=10
+                ).json()
+            st.json(hist)
+
+    except requests.exceptions.ConnectionError:
+        st.error("❌ Cannot reach the API. Make sure FastAPI is running:\n```\nuvicorn main:app --reload\n```")
     except Exception as e:
-        st.error(f"❌ API not reachable. Make sure FastAPI is running!\nError: {e}")
+        st.error(f"❌ Error: {e}")
 
 st.divider()
-st.caption("ChurnGuard AI — Powered by Gradient Boosting | AUC: 0.8336")
+st.caption("ChurnGuard AI — Powered by Gradient Boosting | AUC: 0.8336 | DB-backed v2.0")

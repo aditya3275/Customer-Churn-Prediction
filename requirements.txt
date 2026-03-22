@@ -1,13 +1,28 @@
+# ChurnGuard AI — Python dependencies
+# ── Web framework ──────────────────────────────────────────────────────────────
 fastapi==0.115.0
 uvicorn==0.34.0
+
+# ── Pydantic (FastAPI schemas) ─────────────────────────────────────────────────
+pydantic==2.10.0
+
+# ── Database ───────────────────────────────────────────────────────────────────
+sqlalchemy==2.0.36
+psycopg2-binary==2.9.10        # PostgreSQL driver
+python-dotenv==1.0.1           # .env file support
+
+# ── ML stack ──────────────────────────────────────────────────────────────────
 pandas==2.2.3
 numpy==1.26.4
 scikit-learn==1.6.0
 joblib==1.4.0
-pydantic==2.10.0
 xgboost==3.2.0
 imbalanced-learn==0.13.0
+
+# ── Visualisation ─────────────────────────────────────────────────────────────
 matplotlib==3.10.0
 seaborn==0.13.2
+
+# ── Streamlit frontend ────────────────────────────────────────────────────────
 streamlit==1.43.0
 requests==2.32.0

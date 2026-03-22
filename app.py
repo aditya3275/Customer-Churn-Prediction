@@ -1,17 +1,5 @@
 import streamlit as st
-import threading
-import uvicorn
 
-
-# ── Start FastAPI in background thread ─────────────────────
-def run_api():
-    uvicorn.run("main:app", host="0.0.0.0", port=8000)
-
-
-thread = threading.Thread(target=run_api, daemon=True)
-thread.start()
-
-# ── Page Config ────────────────────────────────────────────
 st.set_page_config(page_title="ChurnGuard AI", page_icon="🛡️", layout="wide")
 
 st.title("🛡️ ChurnGuard AI")
